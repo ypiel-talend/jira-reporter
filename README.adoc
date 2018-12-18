@@ -1,0 +1,33 @@
+= Jira Reporter
+
+== Configuration
+
+Jira Reporter is a CLI but configuration can be hardcoded in `~/.rmannibucau/jira-reporter/defaults.properties`.
+You can use base64 encoding for data you don't want to store in clear:
+
+[source,properties]
+----
+base-url = https://jira.talendforge.org
+password = base64:xxxxx
+jql = labels = xxxx
+exclude-status = closed,resolved,development done,qa done,done
+----
+
+== Usage
+
+Just runt the crest Main with the options of the command line (you can use `help` to know the detail):
+
+[source,sh]
+----
+java -jar jira-reporter.jar \
+  jira report --output=/home/me/graph.html
+----
+
+Then open the output in any browser.
+
+== Build
+
+[source,sh]
+----
+mvn clean install
+----

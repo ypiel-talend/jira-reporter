@@ -1,0 +1,3 @@
+com.github.rmannibucau.jira.reporter.command.JiraCommand
+com.github.rmannibucau.jira.reporter.interceptors.DefaultParams
+com.github.rmannibucau.jira.reporter.interceptors.ExceptionHandler
