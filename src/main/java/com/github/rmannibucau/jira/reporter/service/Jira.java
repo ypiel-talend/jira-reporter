@@ -79,12 +79,21 @@ public class Jira implements AutoCloseable {
     }
 
     public String getIcon(final String uri) {
-        final Response image = client.target(uri).request().header("Authorization", authorization).get();
-        String contentType = image.getHeaderString("Content-Type");
-        if (contentType.contains(";")) {
-            contentType = contentType.substring(0, contentType.indexOf(';'));
+        String icon = "";
+        try {
+            final Response image = client.target(uri).request().header("Authorization", authorization).get();
+            String contentType = image.getHeaderString("Content-Type");
+            if (contentType.contains(";")) {
+                contentType = contentType.substring(0, contentType.indexOf(';'));
+            }
+            icon = "data:" + contentType + ";base64," + Base64.getEncoder().encodeToString(image.readEntity(byte[].class));
         }
-        return "data:" + contentType + ";base64," + Base64.getEncoder().encodeToString(image.readEntity(byte[].class));
+        catch (Exception e){
+            System.err.println("Exception  : " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return icon;
     }
 
     @Data

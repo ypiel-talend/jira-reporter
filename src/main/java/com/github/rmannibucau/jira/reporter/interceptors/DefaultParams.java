@@ -35,7 +35,7 @@ public class DefaultParams {
     private final Map<String, String> values = new HashMap<>();
 
     public DefaultParams() {
-        final File file = new File(System.getProperty("user.home"), ".rmannibucau/jira-reporter/defaults.properties");
+        final File file = new File(System.getProperty("user.home"), ".defaults.properties");
         if (file.exists()) {
             try (final FileReader reader = new FileReader(file)) {
                 final Properties properties = new Properties();

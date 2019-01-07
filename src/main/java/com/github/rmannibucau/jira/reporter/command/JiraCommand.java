@@ -23,8 +23,14 @@ import static java.util.stream.Collectors.toMap;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.tomitribe.crest.api.Command;
@@ -36,12 +42,17 @@ import com.github.rmannibucau.jira.reporter.interceptors.DefaultParams;
 import com.github.rmannibucau.jira.reporter.interceptors.ExceptionHandler;
 import com.github.rmannibucau.jira.reporter.service.Cytoscape;
 import com.github.rmannibucau.jira.reporter.service.Jira;
+import com.github.rmannibucau.jira.reporter.service.Jira.Project;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Command("jira")
 public class JiraCommand {
+
+    private static Map<String, Jira.JiraIssue> issues;
+
+    private static String firstIcon;
 
     @Command(interceptedBy = {
             DefaultParams.class,
@@ -67,19 +78,12 @@ public class JiraCommand {
             final Cytoscape cytoscape = new Cytoscape();
 
             // start by loading matching issues
-            final Map<String, Jira.JiraIssue> issues = jira.query(jql, excludedStatuses)
+            issues = jira.query(jql, excludedStatuses)
                                                            .collect(toMap(Jira.JiraIssue::getId, identity()));
-            // ensure we have all linked issues
-            final String missingIds = issues.values().stream()
-                  .filter(it -> it.getFields().getIssuelinks() != null)
-                  .flatMap(it -> it.getFields().getIssuelinks().stream())
-                  .flatMap(l -> Stream.of(l.getInwardIssue(), l.getOutwardIssue()).filter(Objects::nonNull))
-                  .filter(i -> !issues.containsKey(i.getId()))
-                  .map(Jira.JiraIssue::getId)
-                  .collect(joining(", "));
-            if (!missingIds.isEmpty()) {
-                jira.query("id in (" + missingIds + ")", excludedStatuses)
-                    .forEach(i -> issues.put(i.getId(), i));
+
+            Collection<Jira.JiraIssue> values = new ArrayList<>(issues.values());
+            for (Jira.JiraIssue i : values) {
+                loadDependencies(i, jira, excludedStatuses);
             }
 
             // load icons (as few times as possible)
@@ -110,10 +114,63 @@ public class JiraCommand {
         }
     }
 
+    private static void loadDependencies(Jira.JiraIssue issue, Jira jira, final String[] excludedStatuses){
+        //Collection<Jira.JiraIssue> links = issue.getFields().getIssuelinks();
+        StringBuilder ids = new StringBuilder();
+
+        List<Jira.JiraIssue> missings = issue.getFields().getIssuelinks().stream()
+                .flatMap(l -> Stream.of(l.getInwardIssue(), l.getOutwardIssue())
+                .filter(Objects::nonNull))
+                .filter(i -> !issues.containsKey(i.getId())).collect(Collectors.toList());
+
+        for(Jira.JiraIssue i : missings){
+            if(!issues.containsKey(i.getId())){
+                List<Jira.JiraIssue> res =
+                        jira.query("id = " + i.getId(), excludedStatuses).collect(Collectors.toList());
+
+                if(res.size() == 1) {
+                    Jira.JiraIssue jiraIssue = res.get(0);
+                    issues.put(jiraIssue.getId(), jiraIssue);
+                    if (ids.length() > 0) {
+                        ids.append(",");
+                    }
+                    ids.append(jiraIssue.getId());
+                }
+            }
+
+        }
+
+        if(ids.length() > 0){
+            List<Jira.JiraIssue> deps = jira.query("id in (" + ids + ")", excludedStatuses).collect(Collectors.toList());
+            for(Jira.JiraIssue i : deps){
+                loadDependencies(i, jira, excludedStatuses);
+            }
+        }
+    }
+
     private static String getIcon(final Jira.JiraIssue issue) {
-        return ofNullable(issue.getFields().getProject().getAvatarUrls().get("32x32")).orElseGet(() -> {
-            final Map<String, String> urls = issue.getFields().getProject().getAvatarUrls();
-            return urls.isEmpty() ? "" : urls.values().iterator().next();
-        });
+
+        Project prj = issue.getFields().getProject();
+        if(prj == null){
+            return "";
+        }
+
+       String icon = "";
+       try {
+           icon = ofNullable(issue.getFields().getProject().getAvatarUrls().get("32x32")).orElseGet(() -> {
+               final Map<String, String> urls = issue.getFields().getProject().getAvatarUrls();
+               return urls.isEmpty() ? "" : urls.values().iterator().next();
+           });
+       }
+       catch(Exception e){
+           log.error("Can't retrieve icon => " + e.getMessage());
+           e.printStackTrace();
+       }
+
+        if (firstIcon == null) {
+           firstIcon = icon;
+        }
+
+       return icon;
     }
 }
