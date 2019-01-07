@@ -79,8 +79,9 @@ public class Cytoscape {
         builder.append("var cy = cytoscape({\n");
         builder.append("  container: document.getElementById('cy'),\n");
         builder.append("  elements: elements,\n");
-        builder.append("  boxSelectionEnabled: false,\n");
-        builder.append("  autounselectify: true,\n");
+        builder.append("  boxSelectionEnabled: true,\n");
+        builder.append("  selectionType: 'single',\n");
+        builder.append("  autounselectify: false,\n");
         builder.append("  style: cytoscape.stylesheet()\n");
         builder.append("    .selector('node')\n");
         builder.append("      .css({\n");
@@ -103,8 +104,9 @@ public class Cytoscape {
         builder.append("  } catch (e) {\n");
         builder.append("    window.location.href = this.data('href');\n");
         builder.append("  }\n");
-        builder.append("});");
+        builder.append("}).on('mouseover', 'node', function(){ document.getElementById('tooltip').innerHTML = this.data('name')+': '+this.data('summary'); });");
         builder.append("</script>\n");
+        builder.append("<div id='tooltip' style='color: white'></div>\n");
         builder.append("</body>\n");
         builder.append("</html>\n");
         return builder.toString();

@@ -2,7 +2,7 @@
 
 == Configuration
 
-Jira Reporter is a CLI but configuration can be hardcoded in `~/.rmannibucau/jira-reporter/defaults.properties`.
+Jira Reporter is a CLI but configuration can be hardcoded in `~/.jira-reporter.properties`.
 You can use base64 encoding for data you don't want to store in clear:
 
 [source,properties]

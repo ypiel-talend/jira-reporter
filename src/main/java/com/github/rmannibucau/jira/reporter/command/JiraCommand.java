@@ -17,7 +17,6 @@ package com.github.rmannibucau.jira.reporter.command;
 
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 
 import java.io.FileNotFoundException;
@@ -25,8 +24,6 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
